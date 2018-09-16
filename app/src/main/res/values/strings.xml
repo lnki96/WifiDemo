@@ -1,2 +1,10 @@
 <resources>
+    <string name="main_wlan">WLAN</string>
+    <string name="wifi_icon_img">Wi-Fi signal icon</string>
+    <string name="ap_empty">No AP found.</string>
+    <string name="ap_info_bssid">BSSID</string>
+    <string name="wifi_connect_password">Password</string>
+    <string name="wifi_connect">Connect</string>
+    <string name="wifi_connect_dismiss">Dismiss</string>
+    <string name="wifi_forget">Forget</string>
 </resources>

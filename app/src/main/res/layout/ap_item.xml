@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ap_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:drawableEnd="@drawable/ic_signal_wifi_4_bar_36dp"
+    android:gravity="start|center_vertical"
+    android:orientation="horizontal"
+    android:padding="16dp" />
