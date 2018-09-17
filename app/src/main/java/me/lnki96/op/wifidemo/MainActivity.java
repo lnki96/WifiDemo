@@ -9,6 +9,7 @@ package me.lnki96.op.wifidemo;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -220,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView mApListView = new RecyclerView(mContext);
         mApListView.setAdapter(mApListAdapter);
         mApListView.setLayoutManager(mLayoutManager);
+        mApListView.setBackgroundColor(Color.WHITE);
         viewGroup.addView(mApListView);
 
         mWifiCtrl = new WifiController(mHandler, mWifiManager);

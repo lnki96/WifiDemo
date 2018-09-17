@@ -4,6 +4,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
     <Switch
@@ -16,5 +17,11 @@
         android:paddingRight="8dp"
         android:paddingTop="16dp"
         android:text="@string/main_wlan" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/ap_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white" />
 
 </LinearLayout>
