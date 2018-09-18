@@ -3,7 +3,7 @@
     android:id="@+id/ap_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:drawableEnd="@drawable/ic_signal_wifi_4_bar_36dp"
+    android:drawableEnd="@drawable/ic_signal_wifi_4_bar_32dp"
     android:gravity="start|center_vertical"
     android:orientation="horizontal"
     android:padding="16dp" />

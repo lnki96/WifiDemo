@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
@@ -15,5 +16,11 @@
         android:paddingVertical="16dp"
         android:text="@string/main_wlan"
         android:translationZ="4dp" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/ap_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/wifi_toggle" />
 
 </android.support.constraint.ConstraintLayout>

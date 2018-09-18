@@ -12,24 +12,32 @@ public class WifiController {
 
     private Thread scanThread;
 
-    public WifiController(Handler handler, WifiManager wifiMgr) {
+    private boolean mEnabled;
+
+    WifiController(Handler handler, WifiManager wifiMgr) {
         mHandler = handler;
         mWifiMgr = wifiMgr;
     }
 
-    public void state() {
+    public void state(final int interval) {
         new Thread() {
             @Override
             public void run() {
                 super.run();
 
-                boolean enabled = mWifiMgr.isWifiEnabled();
-                Bundle bundle = new Bundle();
-                bundle.putBoolean(MainActivity.WIFI_ENABLED_BOOL_KEY, enabled);
-                Message msg = new Message();
-                msg.what = MainActivity.WIFI_STATE_MSG;
-                msg.setData(bundle);
-                mHandler.sendMessage(msg);
+                while (!isInterrupted()) {
+                    mEnabled = mWifiMgr.isWifiEnabled();
+                    Bundle bundle = new Bundle();
+                    bundle.putBoolean(MainActivity.WIFI_ENABLED_BOOL_KEY, mEnabled);
+                    Message msg = mHandler.obtainMessage(MainActivity.WIFI_STATE_MSG);
+                    msg.setData(bundle);
+                    mHandler.sendMessage(msg);
+                    try {
+                        sleep(interval);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }.start();
     }
@@ -40,27 +48,23 @@ public class WifiController {
             public void run() {
                 super.run();
 
-                boolean enabled = mWifiMgr.isWifiEnabled();
-                if (mWifiMgr.isWifiEnabled() != enabling)
+                if (mEnabled != enabling)
                     mWifiMgr.setWifiEnabled(enabling);
-                state();
             }
         }.start();
     }
 
     public void startScan(final int interval) {
-        if (scanThread == null || scanThread.isInterrupted()) {
+        if (scanThread == null || !scanThread.isAlive()) {
             scanThread = new Thread() {
                 @Override
                 public void run() {
                     super.run();
 
                     WifiUtils.ScanResultList scanResultList = new WifiUtils.ScanResultList();
-                    while (true) {
+                    while (!isInterrupted()) {
                         scanResultList.set(mWifiMgr.getScanResults());
-                        Message msg = new Message();
-                        msg.what = MainActivity.WIFI_SCAN_MSG;
-                        msg.obj = scanResultList;
+                        Message msg = mHandler.obtainMessage(MainActivity.WIFI_SCAN_MSG, scanResultList);
                         mHandler.sendMessage(msg);
                         try {
                             sleep(interval);
@@ -75,7 +79,7 @@ public class WifiController {
     }
 
     public void stopScan() {
-        if (!scanThread.isInterrupted())
+        if (scanThread != null && scanThread.isAlive())
             scanThread.interrupt();
     }
 

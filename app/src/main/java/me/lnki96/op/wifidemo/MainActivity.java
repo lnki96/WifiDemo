@@ -6,9 +6,11 @@
 
 package me.lnki96.op.wifidemo;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
@@ -17,6 +19,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,13 +28,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     public static final int WIFI_STATE_MSG = 0;
@@ -54,15 +57,18 @@ public class MainActivity extends AppCompatActivity {
                         boolean enabled = msg.getData().getBoolean(WIFI_ENABLED_BOOL_KEY);
                         activity.mWifiToggle.setChecked(enabled);
                         if (enabled)
-                            activity.mWifiCtrl.startScan(1000);
+                            activity.mWifiCtrl.startScan(3000);
                         else
                             activity.mWifiCtrl.stopScan();
+                        break;
                     case WIFI_SCAN_MSG:
                         if (msg.obj instanceof WifiUtils.ScanResultList) {
                             activity.mApListAdapter.setData(((WifiUtils.ScanResultList) msg.obj).get());
                             activity.mApListAdapter.notifyDataSetChanged();
                         }
+                        break;
                     default:
+                        break;
                 }
             }
         }
@@ -108,11 +114,13 @@ public class MainActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
             if (viewHolder instanceof ItemViewHolder) {
                 final ScanResult scanResult = mScanResults.get(position);
-                final boolean open = !(scanResult.capabilities.contains("WPA") && scanResult.capabilities.contains("WEP"));
+                final boolean secure = scanResult.capabilities.contains("WPA") || scanResult.capabilities.contains("WEP");
                 TextView textView = (TextView) viewHolder.itemView;
                 textView.setText(scanResult.SSID);
-                if (!open)
-                    textView.setCompoundDrawables(null, null, getDrawable(R.drawable.ic_signal_wifi_4_bar_lock_36dp), null);
+                if (secure)
+                    textView.setCompoundDrawablesWithIntrinsicBounds(
+                            null, null, ContextCompat.getDrawable(mContext, R.drawable.ic_signal_wifi_4_bar_lock_32dp), null
+                    );
 
                 textView.setOnClickListener(new View.OnClickListener() {
                     String mPasswd = "";
@@ -123,9 +131,12 @@ public class MainActivity extends AppCompatActivity {
                             switch (which) {
                                 case DialogInterface.BUTTON_POSITIVE:
                                     mWifiCtrl.connect(scanResult.SSID, mPasswd);
+                                    break;
                                 case DialogInterface.BUTTON_NEGATIVE:
                                     dialog.dismiss();
+                                    break;
                                 default:
+                                    break;
                             }
                         }
                     };
@@ -137,10 +148,10 @@ public class MainActivity extends AppCompatActivity {
                         wifiConnectDialogBuilder.setTitle(scanResult.SSID);
                         wifiConnectDialogBuilder.setView(mLayoutInflater.inflate(R.layout.wifi_connect, null));
 
-                        EditText passwdEditText = findViewById(R.id.wifi_password);
-                        if (!open) {
+                        TextView passwdEditText = findViewById(R.id.wifi_passwd);
+                        if (!secure) {
                             passwdEditText.setVisibility(View.VISIBLE);
-                            mPasswd = passwdEditText.getText().toString();
+                            mPasswd = Objects.requireNonNull(passwdEditText.getText()).toString();
                         }
                         if (mWifiManager.getConnectionInfo().getSSID().equals(scanResult.SSID))
                             wifiConnectDialogBuilder.setPositiveButton(R.string.wifi_connect, mWifiConnectBtnClickListener);
@@ -183,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
             return (mScanResults == null || mScanResults.size() == 0) ? R.id.ap_empty : R.id.ap_item;
         }
 
-        public void setData(List<ScanResult> scanResults) {
+        public void setData(@Nullable List<ScanResult> scanResults) {
             mScanResults = scanResults;
         }
     }
@@ -208,21 +219,23 @@ public class MainActivity extends AppCompatActivity {
         mWifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         mWifiToggle = findViewById(R.id.wifi_toggle);
-        mWifiToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mWifiToggle.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            public void onClick(View v) {
+                boolean isChecked = ((Switch) v).isChecked();
                 mWifiCtrl.toggle(isChecked);
+                if (!isChecked) {
+                    mApListAdapter.setData(null);
+                    mApListAdapter.notifyDataSetChanged();
+                }
             }
         });
 
-        ViewGroup viewGroup = findViewById(R.id.main);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(mContext);
         mApListAdapter = new ApListAdapter(null);
-        RecyclerView mApListView = new RecyclerView(mContext);
+        RecyclerView mApListView = findViewById(R.id.ap_list);
         mApListView.setAdapter(mApListAdapter);
         mApListView.setLayoutManager(mLayoutManager);
-        mApListView.setBackgroundColor(Color.WHITE);
-        viewGroup.addView(mApListView);
 
         mWifiCtrl = new WifiController(mHandler, mWifiManager);
     }
@@ -231,6 +244,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        mWifiCtrl.state();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_DENIED)
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
+        mWifiCtrl.state(1000);
     }
 }
