@@ -4,7 +4,7 @@ import android.net.wifi.ScanResult;
 
 import java.util.List;
 
-class WifiUtils {
+class Utils {
     static class ScanResultList {
         private List<ScanResult> list;
 

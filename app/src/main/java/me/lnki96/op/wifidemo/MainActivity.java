@@ -8,10 +8,12 @@ package me.lnki96.op.wifidemo;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -55,15 +57,14 @@ public class MainActivity extends AppCompatActivity {
                 switch (msg.what) {
                     case WIFI_STATE_MSG:
                         boolean enabled = msg.getData().getBoolean(WIFI_ENABLED_BOOL_KEY);
-                        activity.mWifiToggle.setChecked(enabled);
                         if (enabled)
                             activity.mWifiCtrl.startScan(3000);
                         else
                             activity.mWifiCtrl.stopScan();
                         break;
                     case WIFI_SCAN_MSG:
-                        if (msg.obj instanceof WifiUtils.ScanResultList) {
-                            activity.mApListAdapter.setData(((WifiUtils.ScanResultList) msg.obj).get());
+                        if (msg.obj instanceof Utils.ScanResultList) {
+                            activity.mApListAdapter.setData(((Utils.ScanResultList) msg.obj).get());
                             activity.mApListAdapter.notifyDataSetChanged();
                         }
                         break;
@@ -202,11 +203,33 @@ public class MainActivity extends AppCompatActivity {
     private Context mContext;
 
     WifiManager mWifiManager;
-    private WifiController mWifiCtrl;
+    private Controller mWifiCtrl;
 
     private Switch mWifiToggle;
 
     private ApListAdapter mApListAdapter;
+
+    private Intent registerMainBroadcastReceiver() {
+        IntentFilter mainIntentFilter = new IntentFilter();
+        mainIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        BroadcastReceiver mainBroadcastReveiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
+                    switch (intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, -1)) {
+                        case WifiManager.WIFI_STATE_ENABLED:
+                            mWifiToggle.setChecked(true);
+                        case WifiManager.WIFI_STATE_DISABLED:
+                            mWifiToggle.setChecked(false);
+                        default:
+                            break;
+                    }
+                }
+            }
+        };
+        return registerReceiver(mainBroadcastReveiver, mainIntentFilter);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -215,6 +238,8 @@ public class MainActivity extends AppCompatActivity {
 
         mContext = getApplicationContext();
         MainHandler mHandler = new MainHandler(this);
+
+        registerMainBroadcastReceiver();
 
         mWifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
@@ -237,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
         mApListView.setAdapter(mApListAdapter);
         mApListView.setLayoutManager(mLayoutManager);
 
-        mWifiCtrl = new WifiController(mHandler, mWifiManager);
+        mWifiCtrl = new Controller(mHandler, mWifiManager);
     }
 
     @Override

@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 
-public class WifiController {
+public class Controller {
     private Handler mHandler;
     private WifiManager mWifiMgr;
 
@@ -14,7 +14,7 @@ public class WifiController {
 
     private boolean mEnabled;
 
-    WifiController(Handler handler, WifiManager wifiMgr) {
+    Controller(Handler handler, WifiManager wifiMgr) {
         mHandler = handler;
         mWifiMgr = wifiMgr;
     }
@@ -61,7 +61,7 @@ public class WifiController {
                 public void run() {
                     super.run();
 
-                    WifiUtils.ScanResultList scanResultList = new WifiUtils.ScanResultList();
+                    Utils.ScanResultList scanResultList = new Utils.ScanResultList();
                     while (!isInterrupted()) {
                         scanResultList.set(mWifiMgr.getScanResults());
                         Message msg = mHandler.obtainMessage(MainActivity.WIFI_SCAN_MSG, scanResultList);
